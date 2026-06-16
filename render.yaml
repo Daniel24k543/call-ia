@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: api-llamadas
+    env: node
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && node index.js"
+    plan: free
+    branch: main
+    envVars:
+      - key: GEMINI_API_KEY
+        scope: run
+      - key: FIREBASE_CONFIG
+        scope: run
+
+  - type: web
+    name: panel-pedidos
+    env: node
+    buildCommand: "cd frontend && npm install && npm run build"
+    startCommand: "cd frontend && npm start"
+    plan: free
+    branch: main
+    envVars:
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        scope: run
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        scope: run
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        scope: run
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        scope: run
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        scope: run
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        scope: run
