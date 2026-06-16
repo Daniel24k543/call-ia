@@ -442,102 +442,147 @@ export default function Dashboard() {
             <p className="text-gray-600 text-lg">No hay pedidos para mostrar</p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-blue-600 to-blue-800 text-white sticky top-0">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Fecha</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Teléfono</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Nombre</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Pedido</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Dirección</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold">Pago</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold">Estado</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {pedidosFiltrados.map((pedido) => (
-                  <tr 
-                    key={pedido.id} 
-                    className={`hover:bg-gray-50 transition-colors ${
-                      pedido.status === "Aceptado" ? "bg-green-50" : pedido.status === "Rechazado" ? "bg-red-50" : ""
-                    }`}
-                  >
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                      {pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleDateString("es-ES") : "N/A"}
-                      <div className="text-xs text-gray-500">
-                        {pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : ""}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {pedidosFiltrados.map((pedido) => (
+              <div
+                key={pedido.id}
+                className={`rounded-lg shadow-lg border-l-4 transition-all duration-300 overflow-hidden ${
+                  pedido.status === "Pendiente" ? "border-yellow-500 bg-white" :
+                  pedido.status === "Aceptado" ? "border-green-500 bg-green-50 shadow-green-200" :
+                  "border-red-500 bg-red-50"
+                }`}
+              >
+                <div className="p-6">
+                  {/* Header con Estado */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-3xl font-bold text-gray-900">{pedido.customer_phone}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{pedido.customer_phone}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{pedido.customer_name || "-"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      <div className="max-w-xs">
-                        {pedido.productos && pedido.productos.length > 0 ? (
-                          <div className="space-y-1">
-                            {pedido.productos.slice(0, 2).map((prod, idx) => (
-                              <div key={idx} className="text-xs">
-                                • {prod.nombre} x{prod.cantidad}
-                              </div>
-                            ))}
-                            {pedido.productos.length > 2 && (
-                              <div className="text-xs text-blue-600 font-semibold">
-                                +{pedido.productos.length - 2} más
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-500">Sin detalles</span>
-                        )}
+                      <p className="text-sm text-gray-600">{pedido.source}</p>
+                    </div>
+                    <span className={`inline-block px-4 py-2 rounded-full font-bold text-sm transition-all ${
+                      pedido.status === "Pendiente" ? "bg-yellow-100 text-yellow-800 animate-pulse" :
+                      pedido.status === "Aceptado" ? "bg-green-100 text-green-800" :
+                      "bg-red-100 text-red-800"
+                    }`}>
+                      {pedido.status === "Aceptado" ? "✅ " : pedido.status === "Rechazado" ? "❌ " : "⏳ "}
+                      {pedido.status}
+                    </span>
+                  </div>
+
+                  {/* Información del Cliente */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-2">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Nombre</p>
+                        <p className="text-sm text-gray-900 font-medium">{pedido.customer_name || "-"}</p>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">{pedido.customer_address || "-"}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                        {pedido.payment_method || "N/A"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                        pedido.status === "Pendiente" ? "bg-yellow-100 text-yellow-800" :
-                        pedido.status === "Aceptado" ? "bg-green-100 text-green-800" :
-                        "bg-red-100 text-red-800"
-                      }`}>
-                        {pedido.status === "Aceptado" ? "✅ " : pedido.status === "Rechazado" ? "❌ " : "⏳ "}
-                        {pedido.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex gap-2 justify-center">
-                        {pedido.status === "Pendiente" && (
-                          <>
-                            <button
-                              onClick={() => aceptarPedido(pedido.id)}
-                              className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-all duration-200"
-                            >
-                              Aceptar
-                            </button>
-                            <button
-                              onClick={() => rechazarPedido(pedido.id)}
-                              className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-all duration-200"
-                            >
-                              Rechazar
-                            </button>
-                          </>
-                        )}
-                        {pedido.status === "Aceptado" && (
-                          <span className="text-xs text-green-700 font-bold">✅ Aceptado</span>
-                        )}
-                        {pedido.status === "Rechazado" && (
-                          <span className="text-xs text-red-700 font-bold">❌ Rechazado</span>
-                        )}
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Dirección</p>
+                        <p className="text-sm text-gray-900">{pedido.customer_address || "-"}</p>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Método de Pago</p>
+                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                          {pedido.payment_method || "N/A"}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Fecha</p>
+                        <p className="text-sm text-gray-900">
+                          {pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleDateString("es-ES") : "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Productos o Detalles */}
+                  {pedido.productos && pedido.productos.length > 0 ? (
+                    <div className="mb-4 overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead className="bg-gray-200">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Producto</th>
+                            <th className="px-3 py-2 text-center">Cantidad</th>
+                            <th className="px-3 py-2 text-right">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pedido.productos.map((prod, idx) => (
+                            <tr key={idx} className="border-b">
+                              <td className="px-3 py-2 font-medium">{prod.nombre}</td>
+                              <td className="px-3 py-2 text-center">{prod.cantidad}</td>
+                              <td className="px-3 py-2 text-right font-bold">
+                                ${(prod.cantidad * prod.precioUnitario * (1 - prod.descuento / 100)).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="mb-4 bg-gray-100 p-3 rounded text-sm text-gray-700">
+                      {pedido.order_details || "Sin detalles"}
+                    </div>
+                  )}
+
+                  {/* Totales */}
+                  {pedido.subtotal !== undefined && pedido.subtotal > 0 && (
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg mb-4 border border-blue-200">
+                      <div className="grid grid-cols-4 gap-3 text-center">
+                        <div>
+                          <p className="text-xs text-gray-600 font-semibold">Sub</p>
+                          <p className="text-sm font-bold text-gray-900">${pedido.subtotal.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 font-semibold">Desc</p>
+                          <p className="text-sm font-bold text-orange-600">-${(pedido.descuentoTotal || 0).toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 font-semibold">Imptos</p>
+                          <p className="text-sm font-bold text-purple-600">${(pedido.impuestos || 0).toFixed(2)}</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded p-2 text-white">
+                          <p className="text-xs font-semibold">TOTAL</p>
+                          <p className="text-lg font-bold">${pedido.total?.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Acciones */}
+                  <div className="flex gap-3">
+                    {pedido.status === "Pendiente" && (
+                      <>
+                        <button
+                          onClick={() => aceptarPedido(pedido.id)}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                          ✅ Aceptar
+                        </button>
+                        <button
+                          onClick={() => rechazarPedido(pedido.id)}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                          ❌ Rechazar
+                        </button>
+                      </>
+                    )}
+                    {pedido.status === "Aceptado" && (
+                      <div className="w-full bg-gradient-to-r from-green-100 to-green-200 text-green-700 font-bold py-2 rounded-lg text-center border border-green-500 animate-pulse">
+                        ✅ Aceptado - En preparación
+                      </div>
+                    )}
+                    {pedido.status === "Rechazado" && (
+                      <div className="w-full bg-gradient-to-r from-red-100 to-red-200 text-red-700 font-bold py-2 rounded-lg text-center border border-red-500">
+                        ❌ Rechazado
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
