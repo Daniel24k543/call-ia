@@ -42,6 +42,7 @@ export default function Dashboard() {
     descuento: 0,
   });
   const [impuestoPorcentaje, setImpuestoPorcentaje] = useState(13);
+  const [expandidos, setExpandidos] = useState<string[]>([]);
 
   useEffect(() => {
     const q = query(collection(db, "pedidos"), orderBy("created_at", "desc"));
@@ -129,6 +130,11 @@ export default function Dashboard() {
     try {
       const pedidoRef = doc(db, "pedidos", id);
       await updateDoc(pedidoRef, { status: "Aceptado" });
+      // Mostrar confirmación con sonido virtual
+      if (typeof window !== "undefined") {
+        const audio = new Audio("data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==");
+        audio.play().catch(() => {});
+      }
     } catch (error) {
       console.error("Error aceptando el pedido", error);
     }
@@ -141,6 +147,12 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error rechazando el pedido", error);
     }
+  };
+
+  const toggleExpandir = (id: string) => {
+    setExpandidos(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
   };
 
   const pedidosFiltrados = pedidos.filter((pedido) => {
@@ -394,90 +406,147 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-6">
             {pedidosFiltrados.map((pedido) => (
-              <div key={pedido.id} className="bg-white rounded-lg shadow-lg p-8 border-l-4 border-blue-500">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <p className="text-sm text-gray-600">Teléfono</p>
-                    <p className="text-2xl font-bold text-gray-900">{pedido.customer_phone}</p>
+              <div 
+                key={pedido.id} 
+                className={`bg-white rounded-lg shadow-lg border-l-4 transition-all duration-300 overflow-hidden ${
+                  pedido.status === "Pendiente" ? "border-yellow-500" :
+                  pedido.status === "Aceptado" ? "border-green-500 shadow-green-200" :
+                  "border-red-500"
+                }`}
+              >
+                <div className="p-8">
+                  {/* Header */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start mb-6">
+                    <div>
+                      <p className="text-sm text-gray-600">Teléfono</p>
+                      <p className="text-2xl font-bold text-gray-900">{pedido.customer_phone}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">Origen</p>
+                      <p className="text-lg font-semibold text-blue-600">{pedido.source}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-block px-4 py-2 rounded-full font-bold text-sm transition-all ${
+                        pedido.status === "Pendiente" ? "bg-yellow-100 text-yellow-800 animate-pulse" :
+                        pedido.status === "Aceptado" ? "bg-green-100 text-green-800" :
+                        "bg-red-100 text-red-800"
+                      }`}>
+                        {pedido.status === "Aceptado" ? "✅ " : pedido.status === "Rechazado" ? "❌ " : "⏳ "}
+                        {pedido.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`inline-block px-4 py-2 rounded-full font-bold ${
-                      pedido.status === "Pendiente" ? "bg-yellow-100 text-yellow-800" :
-                      pedido.status === "Aceptado" ? "bg-green-100 text-green-800" :
-                      "bg-red-100 text-red-800"
-                    }`}>
-                      {pedido.status}
-                    </span>
-                  </div>
-                </div>
 
-                {pedido.productos && pedido.productos.length > 0 && (
-                  <div className="mb-6 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-4 py-2 text-left">Producto</th>
-                          <th className="px-4 py-2 text-center">Cantidad</th>
-                          <th className="px-4 py-2 text-right">Precio Unit.</th>
-                          <th className="px-4 py-2 text-right">Subtotal</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pedido.productos.map((prod, idx) => (
-                          <tr key={idx} className="border-b">
-                            <td className="px-4 py-2 font-medium">{prod.nombre}</td>
-                            <td className="px-4 py-2 text-center">{prod.cantidad}</td>
-                            <td className="px-4 py-2 text-right">${prod.precioUnitario.toFixed(2)}</td>
-                            <td className="px-4 py-2 text-right font-bold">
-                              ${(prod.cantidad * prod.precioUnitario * (1 - prod.descuento / 100)).toFixed(2)}
-                            </td>
+                  {/* Tabla de Productos o Detalles */}
+                  {pedido.productos && pedido.productos.length > 0 ? (
+                    <div className="mb-6 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-4 py-2 text-left">Producto</th>
+                            <th className="px-4 py-2 text-center">Cantidad</th>
+                            <th className="px-4 py-2 text-right">Precio Unit.</th>
+                            <th className="px-4 py-2 text-right">Subtotal</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                {pedido.subtotal !== undefined && (
-                  <div className="bg-gray-50 p-4 rounded-lg mb-6 grid grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-600">Sub-total</p>
-                      <p className="text-lg font-bold">${pedido.subtotal.toFixed(2)}</p>
+                        </thead>
+                        <tbody>
+                          {pedido.productos.map((prod, idx) => (
+                            <tr key={idx} className="border-b hover:bg-gray-50">
+                              <td className="px-4 py-2 font-medium">{prod.nombre}</td>
+                              <td className="px-4 py-2 text-center">{prod.cantidad}</td>
+                              <td className="px-4 py-2 text-right">${prod.precioUnitario.toFixed(2)}</td>
+                              <td className="px-4 py-2 text-right font-bold">
+                                ${(prod.cantidad * prod.precioUnitario * (1 - prod.descuento / 100)).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600">Desc.</p>
-                      <p className="text-lg font-bold">-${(pedido.descuentoTotal || 0).toFixed(2)}</p>
+                  ) : (
+                    <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <p className="text-sm font-semibold text-gray-700 mb-2">📋 Detalles del Pedido</p>
+                      <p className="text-gray-800 text-sm whitespace-pre-wrap font-mono">
+                        {pedido.order_details || "Sin detalles disponibles"}
+                      </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600">Impuestos</p>
-                      <p className="text-lg font-bold">${(pedido.impuestos || 0).toFixed(2)}</p>
-                    </div>
-                    <div className="bg-green-500 rounded p-3 text-white">
-                      <p className="text-xs">TOTAL</p>
-                      <p className="text-2xl font-bold">${pedido.total?.toFixed(2)}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  {pedido.status === "Pendiente" && (
-                    <>
-                      <button
-                        onClick={() => aceptarPedido(pedido.id)}
-                        className="flex-1 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-bold"
-                      >
-                        ✅ Aceptar
-                      </button>
-                      <button
-                        onClick={() => rechazarPedido(pedido.id)}
-                        className="flex-1 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 font-bold"
-                      >
-                        ❌ Rechazar
-                      </button>
-                    </>
                   )}
-                  {pedido.status === "Aceptado" && <div className="w-full bg-green-100 text-green-700 font-bold py-2 rounded-lg text-center">✅ Aceptado</div>}
-                  {pedido.status === "Rechazado" && <div className="w-full bg-red-100 text-red-700 font-bold py-2 rounded-lg text-center">❌ Rechazado</div>}
+
+                  {/* Totales */}
+                  {pedido.subtotal !== undefined && pedido.subtotal > 0 && (
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg mb-6 grid grid-cols-4 gap-4 border border-blue-200">
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Sub-total</p>
+                        <p className="text-lg font-bold text-gray-900">${pedido.subtotal.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Desc.</p>
+                        <p className="text-lg font-bold text-orange-600">-${(pedido.descuentoTotal || 0).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 font-semibold">Impuestos</p>
+                        <p className="text-lg font-bold text-purple-600">${(pedido.impuestos || 0).toFixed(2)}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 rounded p-3 text-white">
+                        <p className="text-xs font-semibold">TOTAL</p>
+                        <p className="text-2xl font-bold">${pedido.total?.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botón Expandir Detalles */}
+                  <button
+                    onClick={() => toggleExpandir(pedido.id)}
+                    className="w-full mb-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm transition"
+                  >
+                    {expandidos.includes(pedido.id) ? "▼ Ocultar detalles" : "▶ Mostrar detalles"}
+                  </button>
+
+                  {/* Detalles Expandidos */}
+                  {expandidos.includes(pedido.id) && (
+                    <div className="mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm space-y-2">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-600 font-semibold">Fecha de Creación</p>
+                          <p className="text-gray-800">{pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleString("es-ES") : "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 font-semibold">ID del Pedido</p>
+                          <p className="text-gray-800 font-mono text-xs">{pedido.id.slice(0, 12)}...</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Acciones */}
+                  <div className="flex gap-3">
+                    {pedido.status === "Pendiente" && (
+                      <>
+                        <button
+                          onClick={() => aceptarPedido(pedido.id)}
+                          className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                          ✅ Aceptar Pedido
+                        </button>
+                        <button
+                          onClick={() => rechazarPedido(pedido.id)}
+                          className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 font-bold transition-all duration-200 transform hover:scale-105 active:scale-95"
+                        >
+                          ❌ Rechazar
+                        </button>
+                      </>
+                    )}
+                    {pedido.status === "Aceptado" && (
+                      <div className="w-full bg-gradient-to-r from-green-100 to-green-200 text-green-700 font-bold py-3 rounded-lg text-center border-2 border-green-500 animate-pulse">
+                        ✅ Pedido Aceptado - En preparación
+                      </div>
+                    )}
+                    {pedido.status === "Rechazado" && (
+                      <div className="w-full bg-gradient-to-r from-red-100 to-red-200 text-red-700 font-bold py-3 rounded-lg text-center border-2 border-red-500">
+                        ❌ Pedido Rechazado
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
