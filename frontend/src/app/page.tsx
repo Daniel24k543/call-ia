@@ -442,7 +442,7 @@ export default function Dashboard() {
             <p className="text-gray-600 text-lg">No hay pedidos para mostrar</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {pedidosFiltrados.map((pedido) => (
               <div
                 key={pedido.id}
@@ -452,14 +452,19 @@ export default function Dashboard() {
                   "border-red-500 bg-red-50"
                 }`}
               >
-                <div className="p-6">
-                  {/* Header con Estado */}
-                  <div className="flex items-start justify-between mb-4">
+                <div className="p-8">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-6 pb-4 border-b-2 border-gray-200">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-3 mb-2">
                         <span className="text-3xl font-bold text-gray-900">{pedido.customer_phone}</span>
+                        <span className="text-lg text-gray-600 font-medium">({pedido.source})</span>
                       </div>
-                      <p className="text-sm text-gray-600">{pedido.source}</p>
+                      {pedido.customer_name && pedido.customer_name !== "No especificado" && (
+                        <p className="text-sm text-gray-700">
+                          <span className="font-semibold">Nombre:</span> {pedido.customer_name}
+                        </p>
+                      )}
                     </div>
                     <span className={`inline-block px-4 py-2 rounded-full font-bold text-sm transition-all ${
                       pedido.status === "Pendiente" ? "bg-yellow-100 text-yellow-800 animate-pulse" :
@@ -471,49 +476,60 @@ export default function Dashboard() {
                     </span>
                   </div>
 
-                  {/* Información del Cliente */}
-                  <div className="bg-gray-50 p-4 rounded-lg mb-4 space-y-2">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-gray-600 font-semibold">Nombre</p>
-                        <p className="text-sm text-gray-900 font-medium">{pedido.customer_name || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600 font-semibold">Dirección</p>
-                        <p className="text-sm text-gray-900">{pedido.customer_address || "-"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600 font-semibold">Método de Pago</p>
-                        <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                          {pedido.payment_method || "N/A"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600 font-semibold">Fecha</p>
-                        <p className="text-sm text-gray-900">
-                          {pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleDateString("es-ES") : "N/A"}
-                        </p>
-                      </div>
+                  {/* Detalles del Pedido - Información de la IA */}
+                  <div className="bg-gray-50 p-5 rounded-lg mb-6 border border-gray-200">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">📋 Detalles del Pedido</p>
+                    <p className="text-gray-800 text-sm whitespace-pre-wrap font-mono leading-relaxed">
+                      {pedido.order_details || "Sin detalles disponibles"}
+                    </p>
+                  </div>
+
+                  {/* Información Adicional */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">Dirección</p>
+                      <p className="text-sm text-gray-900">{pedido.customer_address || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">Método de Pago</p>
+                      <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                        {pedido.payment_method || "N/A"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">Fecha</p>
+                      <p className="text-sm text-gray-900">
+                        {pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleDateString("es-ES") : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 font-semibold">Hora</p>
+                      <p className="text-sm text-gray-900">
+                        {pedido.created_at ? new Date(pedido.created_at.seconds * 1000).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "N/A"}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Productos o Detalles */}
-                  {pedido.productos && pedido.productos.length > 0 ? (
-                    <div className="mb-4 overflow-x-auto">
-                      <table className="w-full text-xs">
+                  {/* Productos si existen */}
+                  {pedido.productos && pedido.productos.length > 0 && (
+                    <div className="mb-6 overflow-x-auto">
+                      <p className="text-sm font-semibold text-gray-700 mb-3">🛒 Productos</p>
+                      <table className="w-full text-sm">
                         <thead className="bg-gray-200">
                           <tr>
-                            <th className="px-3 py-2 text-left">Producto</th>
-                            <th className="px-3 py-2 text-center">Cantidad</th>
-                            <th className="px-3 py-2 text-right">Subtotal</th>
+                            <th className="px-4 py-2 text-left">Producto</th>
+                            <th className="px-4 py-2 text-center">Cantidad</th>
+                            <th className="px-4 py-2 text-right">Precio</th>
+                            <th className="px-4 py-2 text-right">Subtotal</th>
                           </tr>
                         </thead>
                         <tbody>
                           {pedido.productos.map((prod, idx) => (
-                            <tr key={idx} className="border-b">
-                              <td className="px-3 py-2 font-medium">{prod.nombre}</td>
-                              <td className="px-3 py-2 text-center">{prod.cantidad}</td>
-                              <td className="px-3 py-2 text-right font-bold">
+                            <tr key={idx} className="border-b hover:bg-gray-50">
+                              <td className="px-4 py-2 font-medium">{prod.nombre}</td>
+                              <td className="px-4 py-2 text-center">{prod.cantidad}</td>
+                              <td className="px-4 py-2 text-right">${prod.precioUnitario.toFixed(2)}</td>
+                              <td className="px-4 py-2 text-right font-bold">
                                 ${(prod.cantidad * prod.precioUnitario * (1 - prod.descuento / 100)).toFixed(2)}
                               </td>
                             </tr>
@@ -521,31 +537,28 @@ export default function Dashboard() {
                         </tbody>
                       </table>
                     </div>
-                  ) : (
-                    <div className="mb-4 bg-gray-100 p-3 rounded text-sm text-gray-700">
-                      {pedido.order_details || "Sin detalles"}
-                    </div>
                   )}
 
-                  {/* Totales */}
+                  {/* Totales si existen */}
                   {pedido.subtotal !== undefined && pedido.subtotal > 0 && (
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg mb-4 border border-blue-200">
-                      <div className="grid grid-cols-4 gap-3 text-center">
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-5 rounded-lg mb-6 border border-blue-200">
+                      <p className="text-sm font-semibold text-gray-700 mb-3">💰 Resumen de Pago</p>
+                      <div className="grid grid-cols-4 gap-4">
                         <div>
-                          <p className="text-xs text-gray-600 font-semibold">Sub</p>
-                          <p className="text-sm font-bold text-gray-900">${pedido.subtotal.toFixed(2)}</p>
+                          <p className="text-xs text-gray-600 font-semibold">Sub-total</p>
+                          <p className="text-lg font-bold text-gray-900">${pedido.subtotal.toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-600 font-semibold">Desc</p>
-                          <p className="text-sm font-bold text-orange-600">-${(pedido.descuentoTotal || 0).toFixed(2)}</p>
+                          <p className="text-xs text-gray-600 font-semibold">Descuentos</p>
+                          <p className="text-lg font-bold text-orange-600">-${(pedido.descuentoTotal || 0).toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-600 font-semibold">Imptos</p>
-                          <p className="text-sm font-bold text-purple-600">${(pedido.impuestos || 0).toFixed(2)}</p>
+                          <p className="text-xs text-gray-600 font-semibold">Impuestos</p>
+                          <p className="text-lg font-bold text-purple-600">${(pedido.impuestos || 0).toFixed(2)}</p>
                         </div>
-                        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded p-2 text-white">
+                        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded p-3 text-white text-center">
                           <p className="text-xs font-semibold">TOTAL</p>
-                          <p className="text-lg font-bold">${pedido.total?.toFixed(2)}</p>
+                          <p className="text-2xl font-bold">${pedido.total?.toFixed(2)}</p>
                         </div>
                       </div>
                     </div>
@@ -557,26 +570,26 @@ export default function Dashboard() {
                       <>
                         <button
                           onClick={() => aceptarPedido(pedido.id)}
-                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md"
                         >
-                          ✅ Aceptar
+                          ✅ Aceptar Pedido
                         </button>
                         <button
                           onClick={() => rechazarPedido(pedido.id)}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md"
                         >
                           ❌ Rechazar
                         </button>
                       </>
                     )}
                     {pedido.status === "Aceptado" && (
-                      <div className="w-full bg-gradient-to-r from-green-100 to-green-200 text-green-700 font-bold py-2 rounded-lg text-center border border-green-500 animate-pulse">
-                        ✅ Aceptado - En preparación
+                      <div className="w-full bg-gradient-to-r from-green-100 to-green-200 text-green-700 font-bold py-3 rounded-lg text-center border-2 border-green-500 animate-pulse">
+                        ✅ Pedido Aceptado - En preparación
                       </div>
                     )}
                     {pedido.status === "Rechazado" && (
-                      <div className="w-full bg-gradient-to-r from-red-100 to-red-200 text-red-700 font-bold py-2 rounded-lg text-center border border-red-500">
-                        ❌ Rechazado
+                      <div className="w-full bg-gradient-to-r from-red-100 to-red-200 text-red-700 font-bold py-3 rounded-lg text-center border-2 border-red-500">
+                        ❌ Pedido Rechazado
                       </div>
                     )}
                   </div>
